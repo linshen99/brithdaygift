@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘的宝箱？</title>
+    <!-- 引入 Bootstrap 用于排版 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入 Canvas Confetti 礼花库 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            background-color: #0a0a1a; /* 深空黑背景 */
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* --- 宝箱样式 --- */
+        .treasure-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .treasure-box {
+            font-size: 10rem; /* 巨大的宝箱 */
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.6));
+            animation: float 3s ease-in-out infinite; /* 悬浮呼吸效果 */
+            user-select: none;
+        }
+
+        .treasure-hint {
+            margin-top: 20px;
+            color: #00ffff;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px #00ffff;
+            animation: blink 1.5s infinite;
+        }
+
+        /* 掉落动画类 */
+        .drop-in {
+            animation: dropBounce 1s cubic-bezier(0.28, 0.84, 0.42, 1) forwards;
+        }
+
+        @keyframes dropBounce {
+            0% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+            60% { transform: translateY(20px) scale(1.1); opacity: 1; }
+            80% { transform: translateY(-10px) scale(0.95); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* --- 贺卡弹窗样式 (模态框) --- */
+        .card-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .card-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cyber-card {
+            background: rgba(10, 20, 40, 0.9);
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .card-modal.active .cyber-card {
+            transform: scale(1);
+        }
+
+        .card-title {
+            color: #00ffff;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card-content {
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 30px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none; /* 去除链接下划线 */
+            display: inline-block;
+        }
+
+        .close-btn:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        /* 装饰性角标 */
+        .corner {
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid #00ffff;
+        }
+        .tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+        .bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+        .br { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 宝箱区域 -->
+    <div class="treasure-container" id="boxContainer" onclick="openTreasure()">
+        <div class="treasure-box" id="boxIcon">🎁</div>
+        <div class="treasure-hint">>> 点击打开神秘宝箱 <<</div>
+    </div>
+
+    <!-- 贺卡弹窗区域 -->
+    <div class="card-modal" id="cardModal">
+        <div class="cyber-card">
+            <!-- 四角装饰 -->
+            <div class="corner tl"></div><div class="corner tr"></div>
+            <div class="corner bl"></div><div class="corner br"></div>
+
+            <h2 class="card-title">✨ Happy Birthday ✨</h2>
+            <div class="card-content">
+                <p>黄麟同学：</p>
+                <p>holle啊，我是鸡哥<br>又到了一年一度的生日了。</p>
+                <p>恭喜你啊，被我恭喜到了，<br>早餐给你放在了早餐店，午餐和晚餐在饭店。你自己去吃就行。你喜欢吃的零食放在了超市，水果在水果摊。自己去买就行。给你买了汽车放在了4S店，去提就行。房子放在了售楼处，记得带身份证去买就行了。记得要照顾好自己
+                <br><p>愿你平安喜乐，希望你天天开心,祝你生日快乐！<br>                      </p>
+            </div>
+            <!-- 修改这里：将 onclick 改为直接跳转链接，或者保留函数进行跳转 -->
+            <a href="finally.html" class="close-btn" id="jumpLink">收下祝福</a>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时执行宝箱掉落动画
+        window.onload = function() {
+            const box = document.getElementById('boxIcon');
+            // 添加掉落动画类
+            box.classList.add('drop-in');
+        };
+
+        // 打开宝箱逻辑
+        function openTreasure() {
+            const modal = document.getElementById('cardModal');
+            const boxContainer = document.getElementById('boxContainer');
+
+            // 1. 播放礼花特效 (调用 canvas-confetti 库)
+            fireConfetti();
+
+            // 2. 隐藏宝箱
+            boxContainer.style.transform = "scale(0)";
+            boxContainer.style.opacity = "0";
+
+            // 3. 显示贺卡弹窗
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 300);
+        }
+
+        // 礼花特效函数配置
+        function fireConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+
+                // 从屏幕左右两边喷射
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#00ffff', '#ff00ff', '#ffffff'] }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#00ffff', '#ff00ff', '#ffffff'] }));
+            }, 250);
+        }
+
+        // 页面加载完成后，设置跳转链接的地址（这里填入你星辰大海页面的文件名或URL）
+        window.onload = function() {
+            // 获取链接元素
+            const link = document.getElementById('jumpLink');
+            // 设置跳转目标 (请将 'star_ocean.html' 替换为你实际的星辰大海页面文件名)
+            link.href = "finally.html"; 
+        };
+    </script>
+</body>
+</html>

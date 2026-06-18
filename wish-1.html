@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博许愿池</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #0a0a1a; 
+            color: #fff; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: 'Courier New', Courier, monospace; 
+        }
+        
+        /* 卡片样式：青色，降低透明度 */
+        .card { 
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4); 
+            border-radius: 15px; 
+            padding: 40px; 
+            text-align: center; 
+            max-width: 600px; 
+            width: 90%; 
+            z-index: 10; 
+            background-color: rgba(0, 255, 255, 0.15); 
+            backdrop-filter: blur(10px); 
+            border: 2px solid rgba(0, 255, 255, 0.5);
+        }
+        
+        h1 { 
+            color: #00ffff; 
+            font-size: 2em; 
+            margin-bottom: 20px; 
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8); 
+        }
+        
+        .cake-container { 
+            position: relative; 
+            font-size: 8em; 
+            margin: 20px auto; 
+            cursor: pointer; 
+            user-select: none; 
+            width: fit-content; 
+            line-height: 1;
+        }
+        
+        .candles-wrapper { 
+            position: absolute; 
+            top: -35px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: flex; 
+            gap: 15px; 
+        }
+        
+        .candle { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        
+        .flame { 
+            font-size: 18px; 
+            margin-bottom: -5px; 
+            animation: flicker 0.15s infinite alternate; 
+            filter: drop-shadow(0 0 8px #ffaa00); 
+        }
+        @keyframes flicker { 
+            0% { transform: scale(1) rotate(0deg); opacity: 1; } 
+            100% { transform: scale(1.1) rotate(5deg); opacity: 0.8; } 
+        }
+        
+        .smoke { 
+            font-size: 15px; 
+            margin-bottom: -5px;
+            opacity: 0; 
+            pointer-events: none; 
+        }
+        
+        .blown .flame { display: none; }
+        .blown .smoke { animation: smoke-rise 1s ease-out forwards; }
+        @keyframes smoke-rise { 
+            0% { opacity: 0.8; transform: translateY(0); } 
+            100% { opacity: 0; transform: translateY(-30px); } 
+        }
+        
+        .hint-text { 
+            color: #00ffff; 
+            font-size: 1.2em; 
+            margin-top: 15px; 
+            animation: blink 1.5s infinite; 
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        /* 弹幕样式：青色，高对比度 */
+        .danmaku { 
+            position: absolute; 
+            white-space: nowrap; 
+            font-weight: bold; 
+            font-size: 1.3em; 
+            color: #e5cf28; 
+            text-shadow: 0 0 10px rgba(0, 255, 255, 1), 0 0 20px rgba(0, 255, 255, 0.6); 
+            pointer-events: none; 
+            will-change: transform; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1> 🪄 许愿的池 💫</h1>
+        
+        <div id="cake" class="cake-container">
+            🎂
+            <div class="candles-wrapper" id="candleWrapper">
+                <div class="candle">
+                    <span class="flame">🔥</span>
+                    <span class="smoke">💨</span>
+                </div>
+                <div class="candle">
+                    <span class="flame">🔥</span>
+                    <span class="smoke">💨</span>
+                </div>
+                <div class="candle">
+                    <span class="flame">🔥</span>
+                    <span class="smoke">💨</span>
+                </div>
+            </div>
+        </div>
+        
+        <p id="hint" class="hint-text">请闭上眼睛，对着屏幕吹灭蜡烛并许愿！</p>
+    </div>
+
+    <script>
+        const messages = [
+            "鸡哥：祝你生日快乐，心愿加载 （特制）", "生日程序启动，所有愿望执行落地",
+            "智能好运已推送，许愿百分百灵验", "代码运转中，你的心愿正在逐个实现",
+            "赛博生辰快乐，愿望无 bug 全通关", "云端祝福送达，所想皆会如期兑现",
+            "算力拉满，助力每一个生日愿望成真", "检测到生日 buff，心愿执行优先级拉满",
+            "全网好运同步，许愿即刻生效", "指令下达：所有美好与愿望全部就位",
+            "智能护航，许下的心愿绝不落空", "数据加载完毕，快乐 + 愿望双双达标",
+            "虚拟祝福刷屏，现实愿望全部实现", "系统加持，今年许愿命中率满分",
+            "鱼虎山：达人祝你生日快乐（山语）", "服务器全力运转，帮你解锁所有愿望",
+            "赛博好运附体，愿望落地不卡顿", "权限全开，今日所有心愿一律通过",
+            "智能匹配美好，生日愿望全部签收", "算法加持，岁岁欢喜，愿愿成真",
+            "弹幕刷屏祝福，心愿光速抵达", "无故障运行，你的愿望稳步实现",
+            "全域好运连接，许愿一次就灵", "智能模块启动，快乐与心愿双重上线",
+            "生辰信号满格，美好愿望全部接收", "拒绝报错，所有心愿顺利达成",
+            "人工智能在线助攻，愿望通通落地", "数据流送来祝福，所想皆能如愿",
+            "模式切换：生日好运模式永久开启", "终极指令：岁岁平安，愿望全实现！",
+            "运算得出最优解：岁岁无忧，生辰喜乐", "系统推送专属好运，生日快乐，万事顺意",
+           "清除所有烦恼缓存，加载一整年美好与惊喜","AI 判定你值得世间所有温柔，生日快乐",
+           "代码编译满格好运，新一岁平安顺遂","星光数据为你专属生成，生辰大吉",
+           "屏蔽所有坏情绪，永久储存开心与好运","算法锁定幸福，新岁一路闪闪发光",
+           "云端投递生日祝福，岁岁常欢愉"," 算力加满好运 buff,生日快乐万事胜意",
+         "所有美好指令即刻生效，祝生辰快乐","自动过滤苦难，持续输出平安喜乐",
+        "宇宙 AI 送达祝福，年年皆胜意","人生程序无 bug，岁岁平安常欢喜",
+        "好运持续后台运行，生日快乐暴富暴美", "大数据预测你今年万事皆如愿",
+        "开启全年快乐模式，生辰快乐不止今天"," 星河代码编织祝福，新岁自由自在",
+        "永久存档今日欢喜，年年平安无忧",
+        ];
+
+        let isBlown = false;
+        const cake = document.getElementById('cake');
+        const hint = document.getElementById('hint');
+        const candleWrapper = document.getElementById('candleWrapper');
+
+        function blowCandle() {
+            if (isBlown) return;
+            isBlown = true;
+
+            candleWrapper.classList.add('blown');
+            
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } catch(e){ console.log("音频播放受限"); }
+
+            hint.style.animation = 'none';
+            hint.style.color = '#00ffff';
+            hint.textContent = '🚀 愿望已上传云端，正在为您派送...';
+
+            setTimeout(startDanmaku, 1000);
+        }
+
+        cake.addEventListener('click', blowCandle);
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                const audioContext = new AudioContext();
+                const analyser = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                const dataArray = new Uint8Array(analyser.fftSize);
+                
+                microphone.connect(analyser);
+                
+                function checkVolume() {
+                    if (isBlown) return;
+                    analyser.getByteTimeDomainData(dataArray);
+                    let sum = 0;
+                    for(let i = 0; i < dataArray.length; i++) {
+                        sum += Math.abs(dataArray[i] - 128);
+                    }
+                    const average = sum / dataArray.length;
+                    
+                    if (average > 40) {
+                        blowCandle();
+                    } else {
+                        requestAnimationFrame(checkVolume);
+                    }
+                }
+                checkVolume();
+            })
+            .catch(err => {
+                console.log("麦克风未授权或不可用，请使用点击方式吹蜡烛");
+            });
+
+        function startDanmaku() {
+            let msgIndex = 0;
+            const interval = setInterval(() => {
+                createDanmaku(messages[msgIndex]);
+                msgIndex++;
+                
+                // 👇【核心修改】当弹幕全部播完时触发跳转
+                if (msgIndex >= messages.length) {
+                    clearInterval(interval);
+                    
+                    // 延迟 3 秒后跳转到 memory.html（给同学留点时间看最后的弹幕）
+                    setTimeout(function() {
+                        window.location.href = "baoxiang.html";
+                    }, 3000);
+                }
+            }, 300);
+        }
+
+        function createDanmaku(text) {
+            const danmaku = document.createElement('div');
+            danmaku.className = 'danmaku';
+            danmaku.textContent = text;
+            const topPos = Math.random() * 90; 
+            danmaku.style.top = `${topPos}vh`;
+            danmaku.style.right = '-500px';
+            document.body.appendChild(danmaku);
+            const duration = 6 + Math.random() * 4;
+            danmaku.style.transition = `transform ${duration}s linear`;
+            void danmaku.offsetWidth; 
+            danmaku.style.transform = `translateX(-${window.innerWidth + 600}px)`;
+            setTimeout(() => danmaku.remove(), duration * 1000);
+        }
+    </script>
+</body>
+</html>

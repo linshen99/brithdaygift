@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>礼的物</title>
+    <!-- 引入 Bootstrap 样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #d5e23c; /* 浅粉色背景 */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+       /* 1. 默认基础样式（针对普通手机） */
+/* 1. 默认基础样式（针对普通手机） */
+.gift-box {
+    width: 120px;      /* 手机端礼盒宽度放大到 85px */
+    height: 120px;     /* 手机端礼盒高度同步为 85px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;  /* 保持 14px 文字大小刚刚好 */
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin: 20px;
+    user-select: none; 
+    
+    /* 【新增】增加一点圆角和背景色，让礼盒更有质感 */
+    border-radius: 10px; 
+    background-color: rgba(255, 255, 255, 0.6); 
+}
+
+/* 2. 针对平板和桌面端（屏幕宽度大于等于 768px） */
+@media (min-width: 768px) {
+    .gift-box {
+        width: 100px;   /* 平板上进一步放大到 100px */
+        height: 100px; 
+        font-size: 18px; 
+        margin: 15px; 
+    }
+    
+    /* 标题也相应放大 */
+    .game-container h2 {
+        font-size: 2rem;
+    }
+}
+        /* 简单的震动动画 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shake-anim {
+            animation: shake 0.5s;
+        }
+
+        /* 胜利后的全屏遮罩 */
+        #victory-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none; /* 默认隐藏 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h2 class="mb-4 text-danger fw-bold">🎉 朋友 今天我送你五千万！</h2>
+        <p class="text-muted mb-4">请连续拆开 <span id="target-count" class="fw-bold text-primary">5</span> 个礼盒，凑齐五千万吧！</p>
+
+        <!-- 游戏区域：放置几个盒子 -->
+  <!-- 游戏区域：注意这里删除了 <br> 标签 -->
+<div id="game-area">
+    <div class="gift-box" onclick="checkGift(this)">🎁</div>
+    <div class="gift-box" onclick="checkGift(this)">🎁</div>
+    <div class="gift-box" onclick="checkGift(this)">🎁</div>
+    <!-- <br> 删除这一行 -->
+    <div class="gift-box" onclick="checkGift(this)">🎁</div>
+    <div class="gift-box" onclick="checkGift(this)">🎁</div>
+</div>
+
+    <!-- 胜利界面 (默认隐藏) -->
+    <div id="victory-overlay">
+        <h1 class="display-1">🎂</h1>
+        <h2 class="text-danger fw-bold mt-3">生日快乐！</h2>
+        <p class="lead mt-3 px-4 text-center">
+            愿你新的一岁：<br>
+            游戏不掉帧，键盘不卡键。<br>
+            所有的美好都如期而至！
+        </p>
+        <button class="btn btn-outline-danger mt-4" onclick="location.reload()">再玩一次</button>
+
+<!-- 垂直居中、换行显示的返回首页按钮 -->
+<a href="index.html" class="btn btn-outline-danger mt-3 d-block mx-auto" style="width: fit-content;">
+    &larr; 返回首页
+</a>
+    </div>
+    <!-- 撒花特效库 (Canvas Confetti) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        // 1. 定义“五千万”祝福语列表
+        const blessings = [
+            '千万要快乐',
+            '千万要吉祥',
+            '千万要健康',
+            '千万要幸福',
+            '千万要平安'
+        ];
+
+        // 2. 洗牌函数 (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // 3. 初始化变量
+        let currentIndex = 0; // 当前拆到了第几个
+        const totalNeeded = 5; // 总共需要拆5个
+        let revealedCount = 0; // 已经展示的数量
+
+        // 打乱祝福语顺序
+        let shuffledBlessings = shuffleArray([...blessings]);
+
+        // 4. 拆礼物主函数
+        function checkGift(element) {
+            // 如果已经全部展示完了，直接返回
+            if (revealedCount >= totalNeeded) return;
+
+            // 播放震动动画
+            element.classList.add('shake-anim');
+
+            // 获取当前要显示的祝福语
+            const currentBlessing = shuffledBlessings[currentIndex];
+
+            // 延迟一点时间，让震动动画播放一下，再变文字
+            setTimeout(() => {
+                element.innerText = currentBlessing;
+                element.classList.remove('shake-anim');
+                element.style.cursor = 'default';
+                element.onclick = null; // 清除点击事件
+                
+                // 计数器增加
+                currentIndex++;
+                revealedCount++;
+
+                // 检查是否全部拆完
+                if (revealedCount === totalNeeded) {
+                    // 延迟2秒再弹出最终祝福，给用户看清楚“五千万”
+                    setTimeout(showVictory, 2000);
+                }
+            }, 250);
+        }
+
+        // 5. 显示最终胜利画面
+        function showVictory() {
+            document.getElementById('victory-overlay').style.display = 'flex';
+            
+            // 播放撒花特效
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+</html>

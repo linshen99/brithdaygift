@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 禁止手机端缩放，防止布局错乱 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我是标题，别看我了去点神秘彩蛋</title>
+    <style>
+        /* 全屏背景设置 */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            position: relative; 
+            font-family: 'Courier New', Courier, monospace;
+            background-image: url('bg.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* 黑色遮罩层 */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.2); 
+    z-index: 1;
+    pointer-events: none; /* 【新增】允许点击事件穿透遮罩层 */
+}
+
+        /* 文字与按钮的统一容器 - 放在右上角 */
+        .final-text {
+            position: absolute; 
+            top: 0;       
+            right: 0;     
+            z-index: 10;
+            color: #e0f7fa;
+            text-shadow: 0 0 15px #4fc3f7, 0 0 30px #03a9f4; 
+            
+            /* 【核心修改】统一用 margin-right 控制整体靠右的距离，保证不会超出屏幕 */
+            margin: 30px 40px 0 0; 
+            
+            text-align: right; /* 内容全部右对齐 */
+            animation: pulse 4s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+
+        .final-text h1 {
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin: 0 0 10px 0; 
+            letter-spacing: 5px;
+            background: linear-gradient(to right, #fff, #b3e5fc); 
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .final-text p {
+            font-size: 2rem;
+            font-style: italic;
+            color: #fff;
+            margin-top: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
+        }
+
+        /* 【重点修改】音乐播放按钮样式：回归正常文档流，跟随标题排版 */
+        #music-btn {
+            position: relative; /* 恢复为相对定位（默认值），不再使用 absolute */
+            
+            display: inline-block; /* 变成行内块，宽度由文字决定，完美配合右对齐 */
+            margin-top: 30px;      /* 与上方文字的间距 */
+            
+            background: rgba(255, 255, 255, 0.2); 
+            backdrop-filter: blur(5px); 
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #music-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.95); 
+        }
+
+        /* --- 手机端适配 --- */
+        @media (max-width: 768px) {
+            .final-text {
+                margin: 20px 20px 0 0; /* 手机端缩小一点右边距 */
+            }
+            .final-text h1 {
+                font-size: 2.5rem;
+                letter-spacing: 2px;
+            }
+            .final-text p {
+                font-size: 1.2rem;
+                margin-top: 15px;
+            }
+            #music-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 隐藏的音频标签 -->
+    <!-- 隐藏的音频标签 -->
+<audio id="bg-music" loop preload="auto" hidden>
+    <source src="bg.mp3" type="audio/mpeg">
+    <!-- 如果有 ogg 格式可以放在下面作为备用：
+    <source src="brithday.ogg" type="audio/ogg"> 
+    -->
+    您的浏览器不支持 audio 标签。
+</audio>
+
+    <!-- 文字与按钮层 -->
+    <div class="final-text">
+        <h1>祝你生日快乐！</h1>
+        <p>最后感谢你的观看 🌹🌹</p>
+        <button id="music-btn">神秘彩蛋🥚</button>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const musicBtn = document.getElementById('music-btn');
+    const bgMusic = document.getElementById('bg-music');
+    let isPlaying = false;
+
+    async function toggleMusic(e) {
+        e.preventDefault(); 
+        
+        try {
+            if (isPlaying) {
+                bgMusic.pause();
+                musicBtn.textContent = '神秘彩蛋🥚';
+            } else {
+                await bgMusic.play();
+                musicBtn.textContent = '⏸️ 暂停播放';
+            }
+            isPlaying = !isPlaying;
+        } catch (error) {
+            console.log("播放被阻止:", error);
+            musicBtn.textContent = '🔊 点击重试';
+        }
+    }
+
+    // 手机端只用 touchend，PC端用 click，彻底避免双重触发
+    musicBtn.addEventListener('touchend', function(e) {
+        e.preventDefault(); // 必须阻止默认行为，防止随后再触发 click
+        toggleMusic(e);
+    }, { passive: false });
+    
+    musicBtn.addEventListener('click', toggleMusic);
+});
+</script>
+</body>
+</html>
